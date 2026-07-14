@@ -1,4 +1,3 @@
-\# SecLane
 
 A Windows kernel-mode keyboard class filter driver PoC that defeats
 user-mode keyloggers by intercepting real keystrokes before they reach
