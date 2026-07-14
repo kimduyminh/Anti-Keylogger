@@ -1,4 +1,4 @@
-# SecLane
+\# SecLane
 
 A Windows kernel-mode keyboard class filter driver PoC that defeats
 user-mode keyloggers by intercepting real keystrokes before they reach
@@ -6,7 +6,7 @@ the OS, replacing them with a phantom key for every other consumer, and
 delivering the real scan codes to a single trusted user-mode application
 through a separate, authenticated-later channel.
 
-> **Status:** security research. Not production-ready.
+> **Status:** proof of concept / security research. Not production-ready.
 > See [Known Limitations](#known-limitations) before relying on this for
 > anything beyond a lab demo.
 
@@ -100,6 +100,26 @@ Properties → Details → *Hardware Ids*, and add it as its own line under
 
 `UpperFilters` changes only take effect the next time the device
 (re)starts - disable/re-enable it in Device Manager, or reboot.
+
+### Manual alternative (single device, no INF)
+
+For quick local testing against one specific device without going
+through Inf2Cat/driver-store staging, you can set `UpperFilters`
+directly:
+
+```
+sc create securelane type= kernel binPath= C:\Windows\System32\drivers\securelane-driver.sys start= demand
+
+reg add "HKLM\SYSTEM\CurrentControlSet\Enum\<device instance path>" /v UpperFilters /t REG_MULTI_SZ /d "securelane" /f
+```
+
+Run both from an **Administrator** prompt. Find `<device instance path>`
+via Device Manager → your keyboard → Properties → Details → property
+*"Device instance path"* (e.g. `VMBUS\{...}\{...}` for a Hyper-V
+synthetic keyboard, `ACPI\PNP0303\...` for PS/2). Then disable/re-enable
+the device in Device Manager for the change to take effect. This method
+does not use `sc start` - PnP still loads the filter via `UpperFilters`
+when the device restarts, same as the INF-based install.
 
 ## Testing
 
