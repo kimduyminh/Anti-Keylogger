@@ -1,35 +1,4 @@
-﻿;
-; securelane.inf - installs SecLane as an UPPER FILTER on a specific
-; keyboard device instance (below kbdclass.sys, above the port driver).
-;
-; IMPORTANT - READ BEFORE INSTALLING:
-; This driver is now a PnP class filter, NOT a standalone service. It
-; can no longer be started with "sc start securelane" - that workflow
-; is gone. Installation and testing now works like this instead:
-;
-;   1. pnputil.exe /add-driver securelane.inf /install
-;      (requires test signing enabled / the driver test-signed, same as
-;      before - this only changes the STARTUP mechanism, not signing)
-;   2. Find your keyboard's real Hardware ID:
-;        devmgmt.msc -> Keyboards -> (your device) -> Properties ->
-;        Details tab -> Property dropdown: "Hardware Ids"
-;      Replace <PASTE_YOUR_HARDWARE_ID_HERE> below with that exact
-;      string (or add it as an extra line under [Standard.NTamd64] -
-;      you can list more than one device).
-;   3. UpperFilters changes only take effect the next time the device
-;      (re)starts - NOT while it's already running. After installing,
-;      either:
-;        a) Device Manager -> right-click the keyboard -> Disable, then
-;           Enable again, or
-;        b) reboot the VM (safest, especially for the primary keyboard -
-;           disabling your only keyboard mid-session can strand you
-;           without input until it re-enables).
-;   4. To iterate on driver changes: rebuild securelane.sys, run
-;      "pnputil.exe /delete-driver <oem##.inf> /uninstall" for the old
-;      one (find its oem##.inf name via "pnputil /enum-drivers"), then
-;      repeat steps 1 and 3. There's no more fast sc stop/start loop.
-;
-[Version]
+﻿[Version]
 Signature   = "$Windows NT$"
 Class       = Keyboard
 ClassGuid   = {4D36E96B-E325-11CE-BFC1-08002BE10318}
@@ -51,33 +20,6 @@ securelane-driver.sys = 1,,
 [Manufacturer]
 %ProviderString% = Standard,NTamd64
 
-; ---------------------------------------------------------------------
-; Target device(s), matched by COMPATIBLE ID instead of exact per-
-; vendor Hardware ID - this is what makes the INF work across real
-; customer machines without ever needing to look up a specific
-; device's Hardware ID:
-;
-;   *PNP0303                  -> matches essentially all PS/2 keyboards
-;                                 (legacy, vendor-agnostic ID)
-;   HID_DEVICE_UP:0001_U:0006 -> matches ANY HID boot keyboard collection
-;                                 (Usage Page 0x01 = Generic Desktop,
-;                                 Usage 0x06 = Keyboard). Windows' HID
-;                                 class installer auto-generates this
-;                                 compatible ID for every HID collection
-;                                 based on its Usage Page/Usage, on top
-;                                 of whatever vendor-specific VID/PID
-;                                 hardware ID the device also has - so
-;                                 this line matches USB keyboards from
-;                                 any vendor, and (in most cases) VM
-;                                 synthetic keyboards too, since they
-;                                 also enumerate through the HID class
-;                                 stack with this same Usage Page/Usage.
-;
-; Between these two lines, this covers essentially all real keyboards
-; without touching this file per-machine. If a specific device still
-; doesn't match (some VM synthetic devices are the known exception),
-; fall back to the exact-Hardware-ID line further below.
-; ---------------------------------------------------------------------
 [Standard.NTamd64]
 %SecureLane.DeviceDesc% = SecureLane_Inst, *PNP0303
 %SecureLane.DeviceDesc% = SecureLane_Inst, HID_DEVICE_UP:0001_U:0006
